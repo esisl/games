@@ -2,8 +2,6 @@
 <head>
 <meta charset="cp1251"/>
 <title>DESOLATORS</title>
-<!-- Yandex Games SDK -->
-<script src="https://yandex.ru/games/sdk/v2"></script>
 <script src="js/sprite.js"></script>
 <script src="js/bullet.js"></script>
 <script src="js/heli.js"></script>
@@ -81,12 +79,6 @@
    <source src="sound/gimn.ogg" type='audio/ogg; codecs="vorbis"'>
    <source src="sound/gimn.mp3" type='audio/mpeg; codecs="mp3"'></audio>
 <script>
-YaGames
-    .init()
-    .then(ysdk => {
-        console.log('Yandex SDK initialized');
-        window.ysdk = ysdk;
-    });
 //звуки
 var bomber=document.getElementById('bomberS');
 var boom=document.getElementById('boomS');
