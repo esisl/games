@@ -1,0 +1,701 @@
+<html>
+<head>
+<meta charset="cp1251"/>
+<title>DESOLATORS</title>
+<!-- Yandex Games SDK -->
+<script src="https://yandex.ru/games/sdk/v2"></script>
+<script src="js/sprite.js"></script>
+<script src="js/bullet.js"></script>
+<script src="js/heli.js"></script>
+<script src="js/bomb.js"></script>
+<script src="js/exp.js"></script>
+<script src="js/keys.js"></script>
+<script src="js/smoke.js"></script>
+<script src="js/plan.js"></script>
+<script src="js/zenitka.js"></script>
+<script src="js/paratrooper.js"></script>
+<script src="js/trooper.js"></script>
+<script src="js/blood.js"></script>
+</head>
+<body bgcolor="Black" leftmargin="0" topmargin="0" rightmargin="0" bottommargin="0" onload="zastavka()">
+<div style="background-color:#000;">
+<canvas id="gameCanvas" onclick="mouseClick(event)" onmousemove="mouseMove(event)"></canvas>
+</div>
+<div id="LevelDIV" style="color:#ffff00;">Loading</div>
+<div id="StageDIV"> </div>
+
+
+<div id="debug" style="position:absolute;left:700px; top:0px;color:#fff;">
+</div>
+<audio id="bomberS">
+   <source src="sound/bomber.ogg" type='audio/ogg; codecs="vorbis"'>
+   <source src="sound/bomber.mp3" type='audio/mpeg; codecs="mp3"'>
+</audio>
+
+<audio id="boomS">
+   <source src="sound/boom.ogg" type='audio/ogg; codecs="vorbis"'>
+   <source src="sound/boom.mp3" type='audio/mpeg; codecs="mp3"'></audio>
+<audio id="fightS">
+   <source src="sound/fight.ogg" type='audio/ogg; codecs="vorbis"'>
+   <source src="sound/fight.mp3" type='audio/mpeg; codecs="mp3"'></audio>
+<audio id="gunshotS0">
+   <source src="sound/gunshot.ogg" type='audio/ogg; codecs="vorbis"'>
+   <source src="sound/gunshot.mp3" type='audio/mpeg; codecs="mp3"'></audio>
+<audio id="gunshotS1">
+   <source src="sound/gunshot.ogg" type='audio/ogg; codecs="vorbis"'>
+   <source src="sound/gunshot.mp3" type='audio/mpeg; codecs="mp3"'></audio>
+<audio id="gunshotS2">
+   <source src="sound/gunshot.ogg" type='audio/ogg; codecs="vorbis"'>
+   <source src="sound/gunshot.mp3" type='audio/mpeg; codecs="mp3"'></audio>
+<audio id="gunshotS3">
+   <source src="sound/gunshot.ogg" type='audio/ogg; codecs="vorbis"'>
+   <source src="sound/gunshot.mp3" type='audio/mpeg; codecs="mp3"'></audio>
+<audio id="gunshotS4">
+   <source src="sound/gunshot.ogg" type='audio/ogg; codecs="vorbis"'>
+   <source src="sound/gunshot.mp3" type='audio/mpeg; codecs="mp3"'></audio>
+<audio id="gunshotS5">
+   <source src="sound/gunshot.ogg" type='audio/ogg; codecs="vorbis"'>
+   <source src="sound/gunshot.mp3" type='audio/mpeg; codecs="mp3"'></audio>
+<audio id="gunshotS6">
+   <source src="sound/gunshot.ogg" type='audio/ogg; codecs="vorbis"'>
+   <source src="sound/gunshot.mp3" type='audio/mpeg; codecs="mp3"'></audio>
+<audio id="gunshotS7">
+   <source src="sound/gunshot.ogg" type='audio/ogg; codecs="vorbis"'>
+   <source src="sound/gunshot.mp3" type='audio/mpeg; codecs="mp3"'></audio>
+<audio id="gunshotS8">
+   <source src="sound/gunshot.ogg" type='audio/ogg; codecs="vorbis"'>
+   <source src="sound/gunshot.mp3" type='audio/mpeg; codecs="mp3"'></audio>
+<audio id="gunshotS9">
+   <source src="sound/gunshot.ogg" type='audio/ogg; codecs="vorbis"'>
+   <source src="sound/gunshot.mp3" type='audio/mpeg; codecs="mp3"'></audio>
+<audio id="helicopterS">
+   <source src="sound/helicopter_loop.ogg" type='audio/ogg; codecs="vorbis"'>
+   <source src="sound/helicopter_loop.mp3" type='audio/mpeg; codecs="mp3"'></audio>
+<audio id="uzhosS">
+   <source src="sound/uzhos.ogg" type='audio/ogg; codecs="vorbis"'>
+   <source src="sound/uzhos.mp3" type='audio/mpeg; codecs="mp3"'></audio>
+<audio id="bombdownS">
+	<source src="sound/bombdown.ogg" type='audio/ogg; codecs="vorbis"'>
+   <source src="sound/bombdown.mp3" type='audio/mpeg; codecs="mp3"'></audio>
+<audio id="gimnS">
+   <source src="sound/gimn.ogg" type='audio/ogg; codecs="vorbis"'>
+   <source src="sound/gimn.mp3" type='audio/mpeg; codecs="mp3"'></audio>
+<script>
+YaGames
+    .init()
+    .then(ysdk => {
+        console.log('Yandex SDK initialized');
+        window.ysdk = ysdk;
+    });
+//звуки
+var bomber=document.getElementById('bomberS');
+var boom=document.getElementById('boomS');
+var fight=document.getElementById('fightS');
+var gunshot = new Array;
+for(i=0;i<10;i++){
+	gunshot[i]=document.getElementById('gunshotS'+i);
+}
+var currentGun=0;
+var helicopter=document.getElementById('helicopterS');
+var uzhos=document.getElementById('uzhosS');
+var bombdown=document.getElementById('bombdownS');
+var gimn=document.getElementById('gimnS');
+gimn.play();
+
+
+var debug = document.getElementById('debug');
+function supports_canvas() {
+	return !!document.createElement('canvas').getContext; 
+}
+var gloCanvasEnable=supports_canvas();
+
+var gameCanvass = document.getElementById("gameCanvas");
+var ctx = gameCanvass.getContext('2d');
+
+
+gameCanvas.width  = 640;//1010;
+gameCanvas.height = 480;//600;
+var gloMode = 'start';//глобальный флаг состояния
+						//start - стартовая картинка
+						//level - играем
+						//win - выиграли
+						//loose - проиграли
+var flagGameOver = false;//флаг игра окончена
+
+
+
+//звуки
+//var step=document.getElementById('step_ogg');
+
+var fon = new sprite('fonS', 'sprites/fon.jpg', 640, 480, [1]);
+var gun = new sprite('gunS', 'sprites/zenitka.png', 150, 72, [31]);
+gun.setAlign('bottom');
+var fire = new sprite('fireS', 'sprites/fire.png',60,31,[31]);
+fire.setAlign('bottom');
+var tower = new sprite('towerS', 'sprites/tower.png', 100,39,[1]);
+tower.setAlign('bottom');
+var heli0 = new sprite('heli0S', 'sprites/heli0.png', 101, 44, [4,4]);
+heli0.setAlign('bottom');
+var heli1 = new sprite('heli1S', 'sprites/heli1.png', 102, 32, [2,2]);
+heli1.setAlign('bottom');
+var para0 = new sprite('para0', 'sprites/para0.png', 52, 87, [4,4,4]);
+para0.setAlign('bottom');
+var para1 = new sprite('para1', 'sprites/para1.png', 52, 86, [4,4,4]);
+para1.setAlign('bottom');
+var para2 = new sprite('para2', 'sprites/para2.png', 52, 67, [4,4,4]);
+para2.setAlign('bottom');
+
+var b24 = new sprite('b24', 'sprites/b24.png', 150, 48, [2,2]);
+b24.setAlign('bottom');
+var bomb_s = new sprite('bomb', 'sprites/bomb.png', 50, 50, [3,2]);
+bomb_s.setAlign('bottom');
+
+var exp0 = new sprite('exp', 'sprites/exp0.png', 64,64,[13]);
+exp0.setAlign('bottom');
+var exp1 = new sprite('exp', 'sprites/exp1.png', 32,32,[13]);
+exp1.setAlign('bottom');
+var irokez = new sprite('ir', 'sprites/irokez.png', 20, 25, [6,6,1,1,4,4]);
+irokez.setAlign('bottom');
+var krovisha = new sprite('krov', 'sprites/krovischa.png', 94, 50, [11,11]);
+
+var ismoke = new Image();ismoke.src = 'sprites/smoke.png';
+var smoke=new smoke(ismoke);
+
+var start = new Image();start.src='sprites/start.jpg';
+
+var bullets = new Array;
+var helis = new Array;
+var paras = new Array;
+var bombs = new Array;
+var plans = new Array;
+var exps  = new Array;
+var troopers = new Array;
+var bloods = new Array;
+
+var zen = new zenitka(gun);
+zen.x=320;
+zen.y=450;
+var pauseMode = false;
+
+var score = 0;
+var nextStageScore =score+10;
+var stage = 0;
+
+var gloMode='start';
+
+//заставка
+function zastavka(){
+	bomber.pause();
+	fight.pause();
+	helicopter.pause();
+	uzhos.pause();
+	gimn.play();
+	gloMode='start';
+	babahCount=50;
+	runTroops=false;
+	vsegoTroops=0;
+	score=0;
+	stage = 0;
+	titleTop = 500;
+	document.getElementById('LevelDIV').innerHTML = ' ';
+	flagGameOver = false;
+	bullets = new Array;
+	helis = new Array;
+	paras = new Array;
+	bombs = new Array;
+	plans = new Array;
+	exps  = new Array;
+	troopers = new Array;
+	bloods = new Array;
+	ctx.drawImage(start, 0, 0, 640, 480, 0, 0, 640, 480);
+	//alert(1);
+	titlePlay();
+}
+var titleTop = 500;
+function titlePlay(){
+	if(titleTop>40 && gloMode=='start'){
+		ctx.fillStyle = "#000";
+	    ctx.font = "italic 20pt Arial";
+	    ctx.shadowColor = "#FFC";
+	    ctx.shadowOffsetX = 0;
+	    ctx.shadowOffsetY = 0;
+	    ctx.shadowBlur = 10;
+	    var x=100;
+		ctx.drawImage(start, 0, 0, 640, 480, 0, 0, 640, 480);
+	    ctx.fillText("The last free country on Earth", 40+x, titleTop);
+	    ctx.fillText("The last stronghold of", 80+x, titleTop+40);
+	    ctx.fillText("freedom and democracy", 60+x, titleTop+80);
+	    ctx.fillText("Kingdom of the Netherlands", 40+x, titleTop+120);
+	    ctx.fillText("American totalitarian barbarians", 15+x, titleTop+160);
+	    ctx.fillText("And French renegades", 60+x, titleTop+200);
+	    ctx.fillText("ATTACK!", 130+x, titleTop+240);
+	    ctx.fillText("The front line of defense", 40+x, titleTop+280);
+	    ctx.fillText("Only YOU can stop the crushing tread of", -20+x, titleTop+320);
+	    ctx.font = "italic 40pt Arial";
+	    ctx.fillText("DESOLATORS...", 20+x, titleTop+400);
+
+	   	ctx.shadowBlur = 0;
+	    titleTop-=1;
+	    setTimeout('titlePlay()', 50);
+	}
+}
+function setCharasterKey(arr){
+	switch(gloMode){
+		case 'start':
+			if(arr.length){
+				gloMode='level';
+				setTimeout('drawStart()', 50);
+				//wong.lives=5;
+				//startLevel(0);
+				//refresh();
+			}
+		break;
+		case 'level':
+			//здесь будет обработка клавиатуры
+			for(var i in arr){
+				if(arr[i]=='Pause'){
+					pauseMode=!pauseMode;
+					if(!pauseMode){setTimeout('refresh()', 50);}
+				}
+			}
+		break;
+		case 'loose':
+			if(arr.length){
+				zastavka();
+				gloMode='start';
+//				setTimeout('drawStart()', 50);//такой способ запуска, чтобы не оставлять ошмётья в стеке
+			}
+		break;
+	}
+}
+var gunShot = false;
+function mouseClick(event){
+	if(!flagGameOver && vsegoTroops<2){
+		gunShot = true;
+	}
+}
+function mouseMove(e){
+	if(!flagGameOver && vsegoTroops<2){
+		zen.setPosByMouse(e.pageX, e.pageY);
+	}
+}
+var babahCount=50;
+var runTroops=false;
+var vsegoTroops=0;
+function refresh(){
+	var i;
+	var j;
+	var x0,y0,x1,y1;
+	
+	if(gloMode=='start'){return false;}
+	
+	debug.innerHTML='';
+	if(gunShot){
+		
+		gunshot[currentGun].play();
+		currentGun++;
+		if(currentGun>9){currentGun=0;}
+		
+		var n=bullets.length;
+		gunShot = false;
+		bullets[n]=new bullet(fire);
+		bullets[n].pos = zen.pos;
+		bullets[n].step();
+		bullets[n].step();
+		bullets[n].step();
+	}
+	
+	if(pauseMode){
+		//вывести паузу
+		document.getElementById('LevelDIV').innerHTML = '<div style="position:absolute; left:245px; top:175px; color:#333333; font-size:64px;">Pause</div><div style="position:absolute; left:240px; top:170px; color:#ffff00; font-size:64px;">Pause</div>';
+		return false;
+	}
+	
+	if(flagGameOver && (babahCount<5 || smoke.onSmoke)){
+		smoke.step();
+	}
+	
+	zen.step();
+	//обсчитываем снаряды
+	for(i in bullets){
+		bullets[i].step();
+	}
+	
+	
+	//обсчитываем вертолёты
+	var flagCanNew=true;
+	if(flagGameOver || runTroops){flagCanNew=false;}
+	for(i in helis){
+		helis[i].step();
+		if(helis[i].v>0 && helis[i].x<100){flagCanNew=false;}
+		if(helis[i].v<0 && helis[i].x>600){flagCanNew=false;}
+	}
+	//взрываем вертолёты
+	for(i in helis){
+		for(j in bullets){
+			if(bullets[j].checkShot(helis[i].x+30, helis[i].y-20, helis[i].x+90, helis[i].y )){
+				score+=1;
+				//удалить бомбу и снаряд
+				bullets[j].enable=false;
+				helis[i].enable=false;
+				//создать на её месте взрыв
+				n=exps.length;
+				exps[n]=new exp(exp0);
+				exps[n].x=helis[i].x;
+				exps[n].y=helis[i].y;
+				exps[n].vx=helis[i].v;
+				exps[n].vy=1;
+			}
+		}
+	}
+	
+	//временный костыль, число вертолётов зависит от уровня сложности
+	if(helis.length<stage+3 && flagCanNew){
+		var n=helis.length;
+		if(Math.random()>0.5){
+			helis[n] = new heli(heli0);
+		}else{
+			helis[n] = new heli(heli1);
+		}
+		helis[n].setRandom();
+	}
+		
+	//обсчитываем самолёты
+	for(i in plans){
+//		debug.innerHTML+=i;//+'<br>';
+
+		plans[i].step();
+		if(plans[i].v>0 && plans[i].x<100){flagCanNew=false;}
+		if(plans[i].v<0 && plans[i].x>600){flagCanNew=false;}
+	}
+	//взрываем самолёты
+	for(i in plans){
+		for(j in bullets){
+			if(bullets[j].checkShot(plans[i].x+30, plans[i].y-20, plans[i].x+90, plans[i].y )){
+				if(plans[i].lives>0){
+					plans[i].lives--;
+					n=exps.length;
+					exps[n]=new exp(exp1);
+					exps[n].x=bullets[j].x;
+					exps[n].y=bullets[j].y;
+					exps[n].vx=plans[i].v;
+					exps[n].vy=0;
+					bullets[j].enable=false;
+				}else{
+					score+=10;
+					//удалить бомбу и снаряд
+					bullets[j].enable=false;
+					plans[i].enable=false;
+					//создать на её месте взрыв
+					n=exps.length;
+					exps[n]=new exp(exp0);
+					exps[n].x=plans[i].x;
+					exps[n].y=plans[i].y;
+					exps[n].vx=plans[i].v;
+					exps[n].vy=1;
+					n++;
+					exps[n]=new exp(exp0);
+					exps[n].x=plans[i].x-plans[i].v*10;
+					exps[n].y=plans[i].y;
+					exps[n].vx=plans[i].v;
+					exps[n].vy=2;
+					n++;
+					exps[n]=new exp(exp0);
+					exps[n].x=plans[i].x-plans[i].v*10;
+					exps[n].y=plans[i].y;
+					exps[n].vx=plans[i].v;
+					exps[n].vy=3;
+					n++;
+					exps[n]=new exp(exp0);
+					exps[n].x=plans[i].x+plans[i].v*10;
+					exps[n].y=plans[i].y;
+					exps[n].vx=plans[i].v*2;
+					exps[n].vy=1;
+					n++;
+					exps[n]=new exp(exp0);
+					exps[n].pause=10;
+					exps[n].x=plans[i].x-plans[i].v*10;
+					exps[n].y=plans[i].y;
+					exps[n].vx=plans[i].v;
+					exps[n].vy=2;
+					n++;
+					exps[n]=new exp(exp0);
+					exps[n].pause=10;
+					exps[n].x=plans[i].x-plans[i].v*10;
+					exps[n].y=plans[i].y;
+					exps[n].vx=plans[i].v;
+					exps[n].vy=3;
+				}
+			}
+		}
+	}
+	
+	//временный костыль, число самолётов зависит от уровня сложности
+	if(stage>10 && plans.length<stage-9 && flagCanNew){
+		var n=plans.length;
+		plans[n] = new plan(b24);
+		plans[n].setRandom();
+	}
+	
+	
+	//обсчитываем бомбы
+	for(i in bombs){
+		bombs[i].step();
+	}
+	
+	
+	for(i in bombs){
+		//сверить бомбы и снаряды
+		for(j in bullets){
+			if(bullets[j].checkShot(bombs[i].gx0, bombs[i].gy0, bombs[i].gx1, bombs[i].gy1 )){
+				score+=1;
+				//удалить бомбу и снаряд
+				bullets[j].enable=false;
+				bombs[i].enable=false;
+				//создать на её месте взрыв
+				n=exps.length;
+				exps[n]=new exp(exp0);
+				exps[n].x=bombs[i].x;
+				exps[n].y=bombs[i].y;
+				exps[n].vx=bombs[i].vx;
+				exps[n].vy=bombs[i].v;
+			}
+		}
+	}
+	
+	
+	//обсчитываем парашютистов
+	for(i in paras){
+		paras[i].step();
+	}
+	//взрываем парашютистов
+//	debug.innerHTML='';
+	for(i in paras){
+		for(j in bullets){//кооординаты!!!
+			if(bullets[j].checkShot(paras[i].x, paras[i].y-80, paras[i].x+50, paras[i].y )){
+				score+=1;
+				bullets[j].enable=false;
+				paras[i].enable=false;
+				//создать на её месте взрыв
+				n=exps.length;
+				exps[n]=new exp(exp1);
+				exps[n].x=paras[i].x;
+				exps[n].y=paras[i].y;
+				exps[n].vx=0;//paras[i].vx;
+				exps[n].vy=0;//paras[i].v;
+			}
+		}
+	}
+	
+	//создаём взрывы в случае проигрыша
+	if(flagGameOver && babahCount>0){
+		babahCount--;
+		gloMode = 'loose';
+		explGameOver();
+	}
+	//обсчитываем труперов
+	if(troopers.length>4){
+		runTroops=true;
+		flagCanNew=false;
+		if(bombs.length==0){
+			for(i in troopers){
+				if(troopers[i].mode=='hide'){troopers[i].mode='run';}
+			}
+		}
+	}
+	for(i in troopers){
+		troopers[i].step();
+	}
+	if(vsegoTroops>1){
+		gloMode = 'loose';
+		if(bloods.length<20){
+			//создать новой кровищи случайно
+			if(Math.random()<0.05){
+				var n=bloods.length;
+				bloods[n] = new blood(krovisha);
+				bloods[n].x = 310+Math.round(Math.random()*20) - 50;
+				bloods[n].y = 460+Math.round(Math.random()*5) - 32;
+				bloods[n].ani = 0;
+				if(Math.random()>0.5){bloods[n].ani=1;}
+			}
+		}
+	}
+	
+	//обсчитываем взрывы
+	for(i in exps){
+		exps[i].step();
+	}
+	
+	
+	//удаляем взрывы
+	i=0;
+	while(i<exps.length){
+		if(exps[i].enable){
+			i++;
+		}else{
+			exps.splice(i,1);
+		}
+	}
+	//удаляем парашюты
+	i=0;
+	while(i<paras.length){
+		if(paras[i].enable){
+			i++;
+		}else{
+			paras.splice(i,1);
+		}
+	}
+	//удаляем бомбы
+	i=0;
+	while(i<bombs.length){
+		if(bombs[i].enable){
+			i++;
+		}else{
+			bombs.splice(i,1);
+		}
+	}
+	//удаляем самолёты
+	i=0;
+	while(i<plans.length){
+		if(plans[i].enable){
+			i++;
+		}else{
+			plans.splice(i,1);
+		}
+	}
+	//удаляем улетевшие снаряды
+	i=0;
+	while(i<bullets.length){
+		if(bullets[i].enable){
+			i++;
+		}else{
+			bullets.splice(i,1);
+		}
+	}//удаляем вертолёты
+	i=0;
+	while(i<helis.length){
+		if(helis[i].enable){
+			i++;
+		}else{
+			helis.splice(i,1);
+		}
+	}
+	
+	document.getElementById('LevelDIV').innerHTML = '<div style="position:absolute; left:550px; top:10px; color:#ffff00;">Score '+score+'</div>';
+	//каждые 50 баллов наращиваем уровень
+	if(score > nextStageScore){
+		stage++;
+		if(stage<=10){
+			nextStageScore+=10;//надо через каждые сколько очков?
+		}else{
+			nextStageScore+=50;
+		}
+		//alert(1);
+		setTimeout('stageIndicator()', 50);
+	}
+	
+	//sound
+	if(plans.length>0){bomber.play();}
+	if(helis.length>0){helicopter.play();}
+	
+	
+	fon.draw(0,0,0,false);
+	zen.draw();
+	if(flagGameOver && (babahCount<5 || smoke.onSmoke)){
+		smoke.draw();
+	}
+	tower.draw(320,480,0,false);
+	//рисуем снаряды
+	for(i in bullets){
+		bullets[i].draw();
+	}
+	//рисуем вертолёты
+	for(i in helis){
+		helis[i].draw();
+	}
+	//рисуем парашютистов
+	for(i in paras){
+		paras[i].draw();
+	}
+	//рисуем самолёты
+	for(i in plans){
+		plans[i].draw();
+	}
+	//рисуем бомбы
+	for(i in bombs){
+		bombs[i].draw();
+	}
+	//рисуем взрывы
+	for(i in exps){
+		exps[i].draw();
+	}
+	//рисуем труперов
+	for(i in troopers){
+		troopers[i].draw();
+	}
+	//рисуем кровищщу
+	for(i in bloods){
+		bloods[i].draw();
+	}
+
+	if(gloMode=='level' || gloMode=='loose'){
+		setTimeout('refresh()', 40);
+	}
+}
+
+function explGameOver(){
+	var n;
+	for(var i=0;i<20;i++){
+		n=exps.length;
+		exps[n]=new exp(exp1);
+		exps[n].x=320;
+		exps[n].y=460;
+		exps[n].vx=Math.round(Math.random()*5-3);//ex[i][0];
+		exps[n].vy=-Math.round(Math.random()*20+5);//ex[i][1];
+		exps[n].ay=1;//ex[i][2];
+		exps[n].pause=Math.round(Math.random()*10);//ex[i][3];
+	}
+}
+
+function drawStart(){
+	gloMode='level';
+	babahCount=50;
+	nextStageScore=10;
+	runTroops=false;
+	vsegoTroops=0;
+	score = 0;
+	stage=0;
+	flagGameOver = false;
+	smoke.elements = new Array;
+	gimn.pause();
+	setTimeout('refresh()', 50);
+}
+
+var stageIndicateTime = 40;
+var stageIndicatorFlag=true;
+function stageIndicator(){
+	if(stageIndicatorFlag){
+		document.getElementById('StageDIV').innerHTML = '<div style="position:absolute; left:250px; top:150px; color:#ff0000; font-size:48px;">Stage '+stage+'</div>';
+	}else{
+		document.getElementById('StageDIV').innerHTML = ' ';
+	}
+	if(stageIndicateTime==0){
+		stageIndicateTime=40;
+		document.getElementById('StageDIV').innerHTML = ' ';
+	}else{
+		stageIndicateTime--;
+		if(stageIndicateTime/4==Math.round(stageIndicateTime/4)){
+			stageIndicatorFlag = !stageIndicatorFlag;
+		}
+		setTimeout('stageIndicator()', 50);
+	}
+}
+
+//refresh();
+//function drawStart(){
+//	fon.draw(0,0,0,false);
+//	gun.draw(320,350,0,0);
+//}
+</script>
+</body>
+</html>
